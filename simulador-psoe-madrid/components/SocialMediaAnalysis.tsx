@@ -323,9 +323,6 @@ export default function SocialMediaAnalysis({ segments }: SocialMediaAnalysisPro
                       ))}
                     </div>
                     
-                    <div className="text-xs text-gray-500">
-                      Detectada: {formatDate(narrative.firstDetected)}
-                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -405,10 +402,6 @@ export default function SocialMediaAnalysis({ segments }: SocialMediaAnalysisPro
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-gray-100 text-xs text-gray-500">
-                      <div>Primera detección: {formatDate(selectedNarrative.firstDetected)}</div>
-                      <div>Última actualización: {formatDate(selectedNarrative.lastUpdated)}</div>
-                    </div>
                   </CardContent>
                 </Card>
               ) : (
