@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Electoral PSOE Madrid - Versión Simple</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="bg-gradient-to-br from-red-50 via-white to-red-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Simulador Electoral PSOE Madrid
+            </h1>
+            <p class="text-lg text-gray-600">
+                Análisis interactivo del electorado potencial del PSOE en la Comunidad de Madrid
+            </p>
+        </div>
+
+        <!-- Simulador -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Panel de parámetros -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-6">Parámetros de Simulación</h3>
+                
+                <!-- Contexto económico -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Contexto Económico</label>
+                    <input type="range" id="economic" min="-100" max="100" value="0" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateSimulation()">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Crisis (-100)</span>
+                        <span>Neutral (0)</span>
+                        <span>Bonanza (+100)</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">Actual: <span id="economic-value">0</span></p>
+                </div>
+
+                <!-- Contexto político -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Contexto Político</label>
+                    <input type="range" id="political" min="-100" max="100" value="0" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateSimulation()">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Adverso (-100)</span>
+                        <span>Neutral (0)</span>
+                        <span>Favorable (+100)</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">Actual: <span id="political-value">0</span></p>
+                </div>
+
+                <!-- Intensidad de campaña -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Intensidad de Campaña</label>
+                    <input type="range" id="campaign" min="0" max="100" value="50" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateSimulation()">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Baja (0%)</span>
+                        <span>Media (50%)</span>
+                        <span>Alta (100%)</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">Actual: <span id="campaign-value">50%</span></p>
+                </div>
+
+                <!-- Participación -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Participación Electoral</label>
+                    <input type="range" id="participation" min="50" max="85" value="68" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateSimulation()">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Baja (50%)</span>
+                        <span>Media (68%)</span>
+                        <span>Alta (85%)</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">Actual: <span id="participation-value">68%</span></p>
+                </div>
+
+                <!-- Presencia digital -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Presencia en Medios Digitales</label>
+                    <input type="range" id="digital" min="0" max="100" value="60" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           oninput="updateSimulation()">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Mínima (0%)</span>
+                        <span>Media (50%)</span>
+                        <span>Máxima (100%)</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1">Actual: <span id="digital-value">60%</span></p>
+                </div>
+            </div>
+
+            <!-- Panel de resultados -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-xl font-semibold mb-6">Resultados de Simulación</h3>
+                
+                <!-- Resultados esperados -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-medium mb-4 text-gray-700">Resultados Esperados (Base)</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-bold text-red-600">18.2%</div>
+                            <div class="text-sm text-gray-600">Cuota de Voto</div>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-bold text-blue-600">68.5%</div>
+                            <div class="text-sm text-gray-600">Participación</div>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <div class="text-2xl font-bold text-green-600">75%</div>
+                            <div class="text-sm text-gray-600">Confianza</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultados simulados -->
+                <div class="mb-6">
+                    <h4 class="text-lg font-medium mb-4 text-gray-700">Resultados Simulados</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-4 bg-red-50 rounded-lg border-2 border-red-200">
+                            <div class="text-2xl font-bold text-red-700" id="vote-result">18.2%</div>
+                            <div class="text-sm text-gray-600 mb-1">Cuota de Voto</div>
+                            <div class="text-sm font-medium" id="vote-diff">+0.0%</div>
+                        </div>
+                        <div class="text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                            <div class="text-2xl font-bold text-blue-700" id="turnout-result">68.5%</div>
+                            <div class="text-sm text-gray-600 mb-1">Participación</div>
+                            <div class="text-sm font-medium" id="turnout-diff">+0.0%</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                            <div class="text-2xl font-bold text-green-700" id="confidence-result">75%</div>
+                            <div class="text-sm text-gray-600 mb-1">Confianza</div>
+                            <div class="text-sm font-medium" id="confidence-diff">+0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Análisis -->
+                <div id="analysis" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                    <h5 class="font-medium text-yellow-800 mb-2">Análisis de Escenario</h5>
+                    <p class="text-yellow-700 text-sm">Ajusta los parámetros para ver el impacto en los resultados electorales.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función principal de simulación
+        function updateSimulation() {
+            // Obtener valores de los sliders
+            const economic = parseInt(document.getElementById('economic').value);
+            const political = parseInt(document.getElementById('political').value);
+            const campaign = parseInt(document.getElementById('campaign').value);
+            const participation = parseInt(document.getElementById('participation').value);
+            const digital = parseInt(document.getElementById('digital').value);
+
+            // Actualizar displays de valores
+            document.getElementById('economic-value').textContent = economic;
+            document.getElementById('political-value').textContent = political;
+            document.getElementById('campaign-value').textContent = campaign + '%';
+            document.getElementById('participation-value').textContent = participation + '%';
+            document.getElementById('digital-value').textContent = digital + '%';
+
+            // Calcular resultados
+            const baseVote = 18.2;
+            const baseTurnout = 68.5;
+            const baseConfidence = 75;
+
+            // Efectos de los parámetros
+            const economicEffect = (economic / 100) * 3; // ±3%
+            const politicalEffect = (political / 100) * 2; // ±2%
+            const campaignEffect = (campaign / 100) * 2; // 0-2%
+            const participationEffect = (participation - 68.5) * 0.1; // Efecto participación
+            const digitalEffect = (digital - 50) * 0.05; // Efecto digital
+
+            // Calcular nuevos valores
+            const newVote = Math.max(8, Math.min(35, baseVote + economicEffect + politicalEffect + campaignEffect + digitalEffect));
+            const newTurnout = Math.max(50, Math.min(85, participation));
+            const newConfidence = Math.max(60, Math.min(95, baseConfidence + (campaign / 10) + (digital / 20)));
+
+            // Actualizar resultados
+            document.getElementById('vote-result').textContent = newVote.toFixed(1) + '%';
+            document.getElementById('turnout-result').textContent = newTurnout.toFixed(1) + '%';
+            document.getElementById('confidence-result').textContent = newConfidence.toFixed(0) + '%';
+
+            // Calcular y mostrar diferencias
+            const voteDiff = newVote - baseVote;
+            const turnoutDiff = newTurnout - baseTurnout;
+            const confidenceDiff = newConfidence - baseConfidence;
+
+            updateDifference('vote-diff', voteDiff);
+            updateDifference('turnout-diff', turnoutDiff);
+            updateDifference('confidence-diff', confidenceDiff);
+
+            // Actualizar análisis
+            updateAnalysis(economic, political, campaign, participation, digital);
+        }
+
+        // Función para actualizar diferencias con colores
+        function updateDifference(elementId, diff) {
+            const element = document.getElementById(elementId);
+            const text = (diff > 0 ? '+' : '') + diff.toFixed(1) + '%';
+            element.textContent = text;
+            
+            if (diff > 0) {
+                element.className = 'text-sm font-medium text-green-600';
+            } else if (diff < 0) {
+                element.className = 'text-sm font-medium text-red-600';
+            } else {
+                element.className = 'text-sm font-medium text-gray-600';
+            }
+        }
+
+        // Función para actualizar análisis
+        function updateAnalysis(economic, political, campaign, participation, digital) {
+            let analysis = [];
+            
+            if (economic > 30) {
+                analysis.push('Contexto económico favorable impulsa el voto');
+            } else if (economic < -30) {
+                analysis.push('Crisis económica perjudica las expectativas');
+            }
+            
+            if (political > 30) {
+                analysis.push('Contexto político favorable al PSOE');
+            } else if (political < -30) {
+                analysis.push('Contexto político adverso');
+            }
+            
+            if (campaign > 70) {
+                analysis.push('Campaña intensa mejora resultados');
+            }
+            
+            if (participation > 75) {
+                analysis.push('Alta participación favorece al PSOE');
+            } else if (participation < 60) {
+                analysis.push('Baja participación puede perjudicar');
+            }
+            
+            if (digital > 70) {
+                analysis.push('Fuerte presencia digital beneficia a jóvenes');
+            }
+
+            const analysisText = analysis.length > 0 ? analysis.join('. ') + '.' : 'Escenario equilibrado sin efectos destacados.';
+            document.getElementById('analysis').innerHTML = `
+                <h5 class="font-medium text-yellow-800 mb-2">Análisis de Escenario</h5>
+                <p class="text-yellow-700 text-sm">${analysisText}</p>
+            `;
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSimulation();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

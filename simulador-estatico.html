@@ -1,0 +1,2518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Electoral PSOE Madrid</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #fef2f2 100%);
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #dc2626;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #b91c1c;
+        }
+        .progress-bar {
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background-color: #dc2626;
+            height: 8px;
+            transition: width 0.3s ease;
+        }
+        .tab-active {
+            background-color: #dc2626;
+            color: white;
+        }
+        .tab-inactive {
+            background-color: #f9fafb;
+            color: #6b7280;
+        }
+        .tab-inactive:hover {
+            background-color: #f3f4f6;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 10px;
+        }
+        .close:hover {
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                Simulador Electoral PSOE Madrid
+            </h1>
+            <p class="text-lg text-gray-600">
+                Análisis interactivo del electorado potencial del PSOE en la Comunidad de Madrid
+            </p>
+        </div>
+
+        <!-- Métricas principales -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-600">Electorado Potencial</h3>
+                    <i data-lucide="users" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">100%</div>
+                <p class="text-xs text-gray-500">15 tipologías identificadas</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-600">Participación Media</h3>
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">68.5%</div>
+                <p class="text-xs text-gray-500">Ponderada por tamaño</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-600">Estabilidad Media</h3>
+                    <i data-lucide="trending-up" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">62.3%</div>
+                <p class="text-xs text-gray-500">Fidelidad de voto promedio</p>
+            </div>
+            
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-600">Última Actualización</h3>
+                    <i data-lucide="refresh-cw" class="w-4 h-4 text-gray-400"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">Hoy</div>
+                <p class="text-xs text-gray-500">Análisis activo</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+                <button onclick="showTab('overview')" id="tab-overview" class="tab-active px-4 py-2 rounded-md text-sm font-medium transition-all">
+                    Vista General
+                </button>
+                <button onclick="showTab('segments')" id="tab-segments" class="tab-inactive px-4 py-2 rounded-md text-sm font-medium transition-all">
+                    Tipologías
+                </button>
+                <button onclick="showTab('simulation')" id="tab-simulation" class="tab-inactive px-4 py-2 rounded-md text-sm font-medium transition-all">
+                    Simulador
+                </button>
+                <button onclick="showTab('social')" id="tab-social" class="tab-inactive px-4 py-2 rounded-md text-sm font-medium transition-all">
+                    Narrativas Sociales
+                </button>
+            </div>
+        </div>
+
+        <!-- Vista General -->
+        <div id="content-overview" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Distribución por bloques -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold mb-4">Distribución por Bloques Electorales</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium">Fieles y Habituales</span>
+                                <span class="text-sm text-gray-500">45%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 45%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium">Potenciales y Recuperables</span>
+                                <span class="text-sm text-gray-500">35%</span>
+                            </div>
+                            
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 35%"></div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium">Ocasionales y Movilizables</span>
+                                <span class="text-sm text-gray-500">20%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mapa conceptual -->
+                <div class="card p-6">
+                    <h3 class="text-lg font-semibold mb-4">Concentración Geográfica</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-red-600 text-white p-3 rounded text-center">
+                            <div class="text-xs font-medium">Fuenlabrada</div>
+                            <div class="text-lg font-bold">12.8%</div>
+                            <div class="text-xs opacity-90">Muy Alta</div>
+                        </div>
+                        <div class="bg-red-500 text-white p-3 rounded text-center">
+                            <div class="text-xs font-medium">Getafe</div>
+                            <div class="text-lg font-bold">11.2%</div>
+                            <div class="text-xs opacity-90">Alta</div>
+                        </div>
+                        <div class="bg-red-400 text-white p-3 rounded text-center">
+                            <div class="text-xs font-medium">Leganés</div>
+                            <div class="text-lg font-bold">9.8%</div>
+                            <div class="text-xs opacity-90">Media-Alta</div>
+                        </div>
+                        <div class="bg-red-300 text-white p-3 rounded text-center">
+                            <div class="text-xs font-medium">Madrid Sur</div>
+                            <div class="text-lg font-bold">8.5%</div>
+                            <div class="text-xs opacity-90">Media</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas -->
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500"></i>
+                    Alertas y Tendencias Recientes
+                </h3>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
+                        <i data-lucide="trending-down" class="w-4 h-4 text-amber-600 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800">Erosión en el Cinturón Rojo</p>
+                            <p class="text-xs text-amber-700">Detectada caída del 15% en participación en municipios del sur</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-green-600 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm font-medium text-green-800">Crecimiento en Nuevos Ciudadanos</p>
+                            <p class="text-xs text-green-700">Aumento del 7% en intención de voto entre población inmigrante cualificada</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 text-blue-600 mt-0.5"></i>
+                        <div>
+                            <p class="text-sm font-medium text-blue-800">Narrativa Emergente: Vivienda</p>
+                            <p class="text-xs text-blue-700">Incremento del 40% en menciones sobre políticas de vivienda</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tipologías -->
+        <div id="content-segments" class="tab-content hidden">
+            <div class="space-y-6">
+                <!-- Bloque I: Fieles y Habituales -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-red-700">Bloque I: Fieles y Habituales (45%)</h3>
+                    <div class="grid gap-4">
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('veterano')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Veterano Fiel</h4>
+                                    <p class="text-sm text-gray-600">Votante histórico del PSOE, alta fidelidad partidista</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-down" class="w-4 h-4 text-red-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">15%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Carmen, 68 años, jubilada de Getafe</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>85%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>95%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 95%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Pensiones</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Sanidad</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Memoria histórica</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('trabajador')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Trabajador Urbano Comprometido</h4>
+                                    <p class="text-sm text-gray-600">Clase trabajadora con conciencia sindical</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="minus" class="w-4 h-4 text-gray-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">12%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Miguel, 52 años, funcionario de Correos</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>78%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>82%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Derechos laborales</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Sindicatos</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Estado bienestar</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('mujer-progresista')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">La Mujer Progresista Militante</h4>
+                                    <p class="text-sm text-gray-600">Profesional comprometida con la igualdad de género</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">10%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Laura, 42 años, profesora de instituto</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>88%</span>
+                                
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 88%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>75%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Igualdad género</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Conciliación</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Educación</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('inmigrante')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Inmigrante Integrado</h4>
+                                    <p class="text-sm text-gray-600">Población inmigrante nacionalizada con estabilidad laboral</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">8%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Fatima, 38 años, trabajadora marroquí</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>70%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 70%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>68%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 68%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Integración</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Servicios sociales</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-discriminación</span>
+                            </div>
+                        </div>
+                    </div>
+                
+                </div>
+
+                <!-- Bloque II: Potenciales y Recuperables -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-orange-700">Bloque II: Potenciales y Recuperables (35%)</h3>
+                    <div class="grid gap-4">
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('desencantado')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Desencantado de Izquierdas</h4>
+                                    <p class="text-sm text-gray-600">Ex-votante PSOE que migró a otras opciones de izquierda</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">8%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">David, 36 años, periodista freelance</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>82%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>35%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Transformación social</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-establishment</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Políticas progresistas</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('madre-trabajadora')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">La Madre Trabajadora Agobiada</h4>
+                                    <p class="text-sm text-gray-600">Madre con empleos precarios, centrada en políticas familiares</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">7%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Cristina, 33 años, enfermera madre soltera</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>55%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 55%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Conciliación</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Ayudas crianza</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Guarderías</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('joven')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Joven Precario Politizado</h4>
+                                    <p class="text-sm text-gray-600">Joven universitario con empleo temporal</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">6%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Adrián, 26 años, graduado en startup</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>60%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>30%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Vivienda</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Empleo estable</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Medio ambiente</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('converso')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Converso del Centro</h4>
+                                    <p class="text-sm text-gray-600">Ex-votante de centro que migra al PSOE por pragmatismo</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">5%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Carlos, 48 años, arquitecto ex-Ciudadanos</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>85%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>40%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Voto útil</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Estabilidad</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-extrema derecha</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('funcionario')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Funcionario Descontento</h4>
+                                    <p class="text-sm text-gray-600">Empleado público preocupado por recortes</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">4%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Ana, 44 años, profesora de primaria</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>80%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 80%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>55%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 55%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Empleo público</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-privatización</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Educación</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('pensionista')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Pensionista Indeciso</h4>
+                                    <p class="text-sm text-gray-600">Jubilado que oscila entre PP y PSOE según políticas sociales</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="minus" class="w-4 h-4 text-gray-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">5%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Antonio, 72 años, jubilado de construcción</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>82%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 82%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>35%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Pensiones</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Sanidad</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Servicios mayores</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque III: Ocasionales y Movilizables -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4 text-yellow-700">Bloque III: Ocasionales y Movilizables (20%)</h3>
+                    <div class="grid gap-4">
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('abstencionista')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Abstencionista Ocasional</h4>
+                                    <p class="text-sm text-gray-600">Voto reactivo en momentos de alta polarización política</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="minus" class="w-4 h-4 text-gray-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">6%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Javier, 34 años, repartidor de Glovo</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>35%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>25%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-derecha</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Descontento</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Movilización puntual</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('joven-feminista')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">La Joven Feminista Desmovilizada</h4>
+                                    <p class="text-sm text-gray-600">Estudiante o recién graduada, activa en redes feministas</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">4%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Lucía, 23 años, estudiante de Psicología</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>30%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 30%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Feminismo</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Derechos reproductivos</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Violencia género</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('trabajador-desencantado')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Trabajador Desencantado del Sur</h4>
+                                    <p class="text-sm text-gray-600">Ex-votante del cinturón rojo, nostálgico</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-down" class="w-4 h-4 text-red-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">5%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Roberto, 46 años, operario logística</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>60%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>40%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Empleo industrial</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Condiciones laborales</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Anti-gentrificación</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('nuevo-ciudadano')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Nuevo Ciudadano Indeciso</h4>
+                                    <p class="text-sm text-gray-600">Inmigrante cualificado en proceso de integración</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">3%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Elena, 32 años, médica venezolana</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>65%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 65%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>35%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-red-500" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Homologación títulos</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Integración laboral</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Estabilidad</span>
+                            </div>
+                        </div>
+
+                        <div class="card p-4 cursor-pointer hover:shadow-md transition-all" onclick="selectSegment('ecologista')">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">El Ecologista Pragmático</h4>
+                                    <p class="text-sm text-gray-600">Profesional técnico preocupado por medio ambiente</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">2%</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-gray-700 mb-3">
+                                <i data-lucide="users" class="w-4 h-4 text-gray-500"></i>
+                                <span class="font-medium">Marcos, 38 años, ingeniero ambiental</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Participación</span>
+                                        <span>78%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>Estabilidad</span>
+                                        <span>45%</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Medio ambiente</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Transición energética</span>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Sostenibilidad</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulador -->
+        <div id="content-simulation" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Panel de parámetros -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+                        Parámetros de Simulación
+                    </h3>
+                    
+                    <!-- Contexto económico -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Contexto Económico</label>
+                        <input type="range" id="economic" min="-100" max="100" value="0" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Crisis (-100)</span>
+                            <span>Neutral (0)</span>
+                            <span>Bonanza (+100)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="economic-value">0</span></p>
+                    </div>
+
+                    <!-- Contexto político -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Contexto Político</label>
+                        <input type="range" id="political" min="-100" max="100" value="0" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Adverso (-100)</span>
+                            <span>Neutral (0)</span>
+                            <span>Favorable (+100)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="political-value">0</span></p>
+                    </div>
+
+                    <!-- Intensidad de campaña -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Intensidad de Campaña</label>
+                        <input type="range" id="campaign" min="0" max="100" value="50" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Baja (0%)</span>
+                            <span>Media (50%)</span>
+                            <span>Alta (100%)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="campaign-value">50%</span></p>
+                    </div>
+
+                    <!-- Participación -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Participación Electoral</label>
+                        <input type="range" id="participation" min="50" max="85" value="68" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Baja (50%)</span>
+                            <span>Media (68%)</span>
+                            <span>Alta (85%)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="participation-value">68%</span></p>
+                    </div>
+
+                    <!-- Presencia digital -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Presencia en Medios Digitales</label>
+                        <input type="range" id="digital" min="0" max="100" value="60" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Mínima (0%)</span>
+                            <span>Media (50%)</span>
+                            <span>Máxima (100%)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="digital-value">60%</span></p>
+                    </div>
+
+                    <!-- Presencia tradicional -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Presencia en Medios Tradicionales</label>
+                        <input type="range" id="traditional" min="0" max="100" value="70" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Mínima (0%)</span>
+                            <span>Media (50%)</span>
+                            <span>Máxima (100%)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="traditional-value">70%</span></p>
+                    </div>
+
+                    <!-- Voto estratégico -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Voto Estratégico/Útil</label>
+                        <input type="range" id="strategic" min="0" max="100" value="35" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Ideológico (0%)</span>
+                            <span>Mixto (50%)</span>
+                            <span>Estratégico (100%)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="strategic-value">35%</span></p>
+                    </div>
+
+                    <!-- Momentum social -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Momentum en Redes Sociales</label>
+                        <input type="range" id="momentum" min="-50" max="50" value="0" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               oninput="updateSimulationResults()">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Negativo (-50)</span>
+                            <span>Neutral (0)</span>
+                            <span>Positivo (+50)</span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Actual: <span id="momentum-value">0</span></p>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="flex gap-3">
+                        <button onclick="updateSimulationResults()" class="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            Ejecutar Simulación
+                        </button>
+                        <button onclick="resetSimulationParameters()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel de resultados -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                        Resultados de Simulación
+                    </h3>
+                    
+                    <!-- Resultados esperados -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-medium mb-4 text-gray-700">Resultados Esperados (Base)</h4>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-2xl font-bold text-red-600">18.2%</div>
+                                <div class="text-sm text-gray-600 mb-2">Cuota de Voto</div>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600">68.5%</div>
+                                <div class="text-sm text-gray-600 mb-2">Participación</div>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600">75%</div>
+                                <div class="text-sm text-gray-600 mb-2">Confianza</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados simulados -->
+                    <div class="mb-6">
+                        <h4 class="text-lg font-medium mb-4 text-gray-700">Resultados Simulados</h4>
+                        <div class="space-y-4">
+                            <!-- Cuota de Voto -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-red-600" id="sim-vote">18.2%</div>
+                                    <div class="text-sm text-gray-600 mb-2">Cuota de Voto Simulada</div>
+                                    <div id="sim-vote-diff" class="text-sm font-medium text-gray-600">+0.0%</div>
+                                    <div class="text-xs text-gray-500">vs. esperado</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Participación -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-600" id="sim-turnout">68.5%</div>
+                                    <div class="text-sm text-gray-600 mb-2">Participación Simulada</div>
+                                    <div id="sim-turnout-diff" class="text-sm font-medium text-gray-600">+0.0%</div>
+                                    <div class="text-xs text-gray-500">vs. esperado</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Confianza -->
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-600" id="sim-confidence">75%</div>
+                                    <div class="text-sm text-gray-600 mb-2">Confianza Simulada</div>
+                                    <div id="sim-confidence-diff" class="text-sm font-medium text-gray-600">+0%</div>
+                                    <div class="text-xs text-gray-500">vs. esperado</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Análisis -->
+                    <div id="simulation-analysis" class="bg-blue-50 p-4 rounded-lg">
+                        <h5 class="font-medium text-blue-900 mb-2">Análisis del Escenario</h5>
+                        <div id="analysis-content" class="text-sm text-blue-800">
+                            Configuración base - Ajusta los parámetros para ver el análisis
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Narrativas Sociales -->
+        <div id="content-social" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="card p-4">
+                    <h4 class="text-sm font-medium text-gray-600 mb-2">Menciones Totales</h4>
+                    <div class="text-2xl font-bold">4,220</div>
+                    <p class="text-xs text-gray-500">Últimas 24 horas</p>
+                </div>
+                
+                <div class="card p-4">
+                    <h4 class="text-sm font-medium text-gray-600 mb-2">Narrativas Activas</h4>
+                    <div class="text-2xl font-bold">5</div>
+                    <p class="text-xs text-gray-500">3 en crecimiento</p>
+                </div>
+                
+                <div class="card p-4">
+                    <h4 class="text-sm font-medium text-gray-600 mb-2">Sentimiento Promedio</h4>
+                    <div class="text-2xl font-bold text-green-600">+32%</div>
+                    <p class="text-xs text-gray-500">Tendencia positiva</p>
+                </div>
+                
+                <div class="card p-4">
+                    <h4 class="text-sm font-medium text-gray-600 mb-2">Última Actualización</h4>
+                    <div class="text-sm font-bold">15/04 21:19</div>
+                    <button class="btn-primary text-xs mt-2 px-2 py-1">Actualizar</button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="card p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Políticas de vivienda para jóvenes</h4>
+                            <p class="text-sm text-gray-600">Narrativa emergente con alto impacto</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">1,250</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Positivo</div>
+                        <span class="text-xs text-gray-600">Relevancia: 85%</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Twitter</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Instagram</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">TikTok</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Detectada: 10/01/2024</div>
+                </div>
+
+                <div class="card p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Defensa de la sanidad pública</h4>
+                            <p class="text-sm text-gray-600">Narrativa estable con alta relevancia</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="minus" class="w-4 h-4 text-gray-600"></i>
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">980</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Positivo</div>
+                        <span class="text-xs text-gray-600">Relevancia: 90%</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Facebook</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Twitter</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">WhatsApp</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Detectada: 05/01/2024</div>
+                </div>
+
+                <div class="card p-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h4 class="font-semibold text-gray-900">Igualdad de género y feminismo</h4>
+                            <p class="text-sm text-gray-600">Crecimiento sostenido en redes</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">850</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Positivo</div>
+                        <span class="text-xs text-gray-600">Relevancia: 75%</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Instagram</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">TikTok</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Twitter</span>
+                    </div>
+                    <div class="text-xs text-gray-500">Detectada: 08/01/2024</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para perfiles detallados -->
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-xl">
+                <span class="close">&times;</span>
+                <h2 id="modal-title" class="text-2xl font-bold mb-2"></h2>
+                <p id="modal-subtitle" class="text-red-100"></p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Persona Tipo -->
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                        Persona Tipo
+                    </h3>
+                    <div id="modal-persona" class="text-blue-800"></div>
+                </div>
+
+                <!-- Métricas principales -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600" id="modal-size"></div>
+                        <div class="text-sm text-gray-600">Tamaño del Segmento</div>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600" id="modal-participation"></div>
+                        <div class="text-sm text-gray-600">Participación Electoral</div>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600" id="modal-stability"></div>
+                        <div class="text-sm text-gray-600">Estabilidad de Voto</div>
+                    </div>
+                </div>
+
+                <!-- Perfil Demográfico -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                        Perfil Demográfico
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Rango de Edad</div>
+                            <div id="modal-age" class="text-gray-900"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Género</div>
+                            <div id="modal-gender" class="text-gray-900"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Educación</div>
+                            <div id="modal-education" class="text-gray-900"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Clase Social</div>
+                            <div id="modal-class" class="text-gray-900"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Motivaciones -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                        Motivaciones Principales
+                    </h3>
+                    <div id="modal-motivations" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Canales de Información -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="radio" class="w-5 h-5"></i>
+                        Canales de Información
+                    </h3>
+                    <div id="modal-channels" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Distribución Geográfica -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                        Distribución Geográfica Principal
+                    </h3>
+                    <div id="modal-geography" class="space-y-2"></div>
+                </div>
+
+                <!-- Tendencias -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                        Análisis de Tendencias
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-gray-50 rounded">
+                            <div id="modal-growth" class="text-lg font-bold"></div>
+                            <div class="text-xs text-gray-600">Crecimiento</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded">
+                            <div id="modal-risk" class="text-lg font-bold"></div>
+                            <div class="text-xs text-gray-600">Nivel de Riesgo</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-50 rounded">
+                            <div id="modal-trend" class="text-lg font-bold"></div>
+                            <div class="text-xs text-gray-600">Tendencia</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estrategias Recomendadas -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="target" class="w-5 h-5"></i>
+                        Estrategias Recomendadas
+                    </h3>
+                    <div id="modal-strategies" class="space-y-2"></div>
+                </div>
+
+                <!-- Mensaje Clave -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                        Mensaje Clave Más Efectivo
+                    </h3>
+                    <div id="modal-message" class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+                        <div class="text-red-800 font-medium italic"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+
+        // Variables globales para simulación
+        let currentTab = 'overview';
+
+        // Base de datos completa de perfiles detallados
+        const profilesData = {
+            'veterano': {
+                title: 'El Veterano Fiel',
+                subtitle: 'Votante histórico del PSOE con alta fidelidad partidista',
+                persona: 'Carmen, 68 años, jubilada de Getafe. Trabajó en una fábrica textil durante 40 años. Vota al PSOE desde la Transición. Se informa por Telecinco y La Sexta, lee ocasionalmente El País. Participa activamente en asociaciones de vecinos. Su principal preocupación son las pensiones y la sanidad pública.',
+                size: '15%',
+                participation: '85%',
+                stability: '95%',
+                age: '65-74 años',
+                gender: 'Mayoritariamente mujeres (60%)',
+                education: 'Primaria o secundaria básica',
+                class: 'Media-baja, pensionistas',
+                motivations: ['Identidad partidista histórica', 'Memoria de conquistas sociales', 'Políticas de pensiones', 'Sanidad pública', 'Voto de lealtad generacional'],
+                channels: ['Televisión (Telecinco, La Sexta)', 'Radio SER', 'El País ocasional', 'Asociaciones vecinales'],
+                geography: [
+                    { zone: 'Getafe', percentage: '18%' },
+                    { zone: 'Fuenlabrada', percentage: '16%' },
+                    { zone: 'Leganés', percentage: '15%' },
+                    { zone: 'Vallecas', percentage: '12%' },
+                    { zone: 'Villaverde', percentage: '11%' }
+                ],
+                growth: '-2%',
+                risk: 'Bajo',
+                trend: 'Decreciente',
+                strategies: [
+                    'Reforzar mensaje de defensa de pensiones y sanidad',
+                    'Mantener presencia en medios tradicionales',
+                    'Activar redes de asociaciones vecinales',
+                    'Enfatizar continuidad y experiencia del partido'
+                ],
+                keyMessage: '"El PSOE siempre ha defendido tus derechos. Desde la Transición, hemos luchado por unas pensiones dignas y una sanidad pública de calidad. Tu experiencia y tu voto son fundamentales para seguir protegiendo lo que tanto nos costó conseguir."'
+            },
+            'trabajador': {
+                title: 'El Trabajador Urbano Comprometido',
+                subtitle: 'Clase trabajadora con conciencia sindical y compromiso social',
+                persona: 'Miguel, 52 años, funcionario de Correos en Fuenlabrada. Afiliado a CCOO desde hace 20 años. Se informa por redes sociales (Facebook, Twitter) y escucha la SER. Preocupado por la estabilidad laboral y la educación pública para sus hijos.',
+                size: '12%',
+                participation: '78%',
+                stability: '82%',
+                age: '45-64 años',
+                gender: 'Equilibrio con ligero sesgo masculino',
+                education: 'FP o secundaria completa',
+                class: 'Clase trabajadora, empleados públicos',
+                motivations: ['Defensa de derechos laborales', 'Políticas redistributivas', 'Protección del estado del bienestar', 'Rechazo a políticas neoliberales'],
+                channels: ['Radio SER', 'Facebook', 'Twitter', 'Información sindical'],
+                geography: [
+                    { zone: 'Fuenlabrada', percentage: '20%' },
+                    { zone: 'Getafe', percentage: '18%' },
+                    { zone: 'Leganés', percentage: '16%' },
+                    { zone: 'Móstoles', percentage: '14%' },
+                    { zone: 'Alcorcón', percentage: '12%' }
+                ],
+                growth: '-1%',
+                risk: 'Medio',
+                trend: 'Estable',
+                strategies: [
+                    'Enfatizar políticas laborales y sindicales',
+                    'Mantener presencia en redes sociales laborales',
+                    'Colaborar con sindicatos en campañas',
+                    'Defender empleo público y derechos laborales'
+                ],
+                keyMessage: '"Juntos hemos construido los derechos laborales que tenemos hoy. El PSOE seguirá defendiendo el empleo público, los convenios colectivos y un salario digno. Tu trabajo merece respeto y protección, no recortes."'
+            },
+            'mujer-progresista': {
+                title: 'La Mujer Progresista Militante',
+                subtitle: 'Profesional comprometida con la igualdad de género y valores progresistas',
+                persona: 'Laura, 42 años, profesora de instituto en Madrid. Madre de dos hijos. Muy activa en Twitter e Instagram. Lee elDiario.es y Público. Participa en manifestaciones feministas. Su voto se decide por políticas de igualdad y educación.',
+                size: '10%',
+                participation: '88%',
+                stability: '75%',
+                age: '35-55 años',
+                gender: 'Exclusivamente femenino',
+                education: 'Universitaria o FP superior',
+                class: 'Media, profesionales',
+                motivations: ['Políticas de igualdad de género', 'Derechos reproductivos', 'Conciliación laboral-familiar', 'Agenda progresista en valores sociales'],
+                channels: ['Twitter', 'Instagram', 'elDiario.es', 'Público', 'Manifestaciones'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '25%' },
+                    { zone: 'Madrid Sur', percentage: '20%' },
+                    { zone: 'Getafe', percentage: '12%' },
+                    { zone: 'Alcalá de Henares', percentage: '10%' },
+                    { zone: 'Torrejón', percentage: '8%' }
+                ],
+                growth: '+3%',
+                risk: 'Medio',
+                trend: 'Creciente',
+                strategies: [
+                    'Mantener agenda feminista visible',
+                    'Presencia activa en redes sociales progresistas',
+                    'Candidaturas femeninas fuertes',
+                    'Políticas específicas de conciliación'
+                ],
+                keyMessage: '"La igualdad no es negociable. El PSOE es el único partido que garantiza tus derechos reproductivos, la igualdad salarial real y políticas de conciliación efectivas. Tu lucha es nuestra lucha."'
+            },
+            'inmigrante': {
+                title: 'El Inmigrante Integrado',
+                subtitle: 'Población inmigrante nacionalizada con estabilidad laboral',
+                persona: 'Fatima, 38 años, marroquí nacionalizada, trabaja en limpieza en Leganés. Vive con su familia (marido e hijos). Se informa por WhatsApp, televisión árabe y española. Vota PSOE por las políticas sociales y contra la discriminación. Participa en asociaciones de su comunidad.',
+                size: '8%',
+                participation: '70%',
+                stability: '68%',
+                age: '30-50 años',
+                gender: 'Equilibrado',
+                education: 'Variable, tendencia a secundaria',
+                class: 'Trabajadora, servicios',
+                motivations: ['Políticas de integración', 'Servicios sociales', 'Regularización y derechos', 'Rechazo a discursos xenófobos'],
+                channels: ['WhatsApp', 'Televisión árabe/latina', 'Televisión española', 'Comunidades de origen'],
+                geography: [
+                    { zone: 'Leganés', percentage: '18%' },
+                    { zone: 'Fuenlabrada', percentage: '16%' },
+                    { zone: 'Madrid Centro', percentage: '15%' },
+                    { zone: 'Getafe', percentage: '14%' },
+                    { zone: 'Alcorcón', percentage: '12%' }
+                ],
+                growth: '+5%',
+                risk: 'Medio',
+                trend: 'Creciente',
+                strategies: [
+                    'Políticas de integración y anti-discriminación',
+                    'Comunicación en idiomas comunitarios',
+                    'Colaboración con asociaciones de inmigrantes',
+                    'Facilitar procesos de regularización'
+                ],
+                keyMessage: '"España es tu hogar y el PSOE defiende tu derecho a vivirlo con dignidad. Luchamos contra la discriminación, por la reagrupación familiar y por una integración real. Todos somos España."'
+            },
+            'desencantado': {
+                title: 'El Desencantado de Izquierdas',
+                subtitle: 'Ex-votante PSOE que migró a otras opciones de izquierda',
+                persona: 'David, 36 años, periodista freelance en Lavapiés. Votó PSOE hasta 2015, luego Podemos, después Más Madrid. Se informa por medios alternativos y redes sociales. Podría volver al PSOE si adopta posiciones más progresistas en temas como vivienda y justicia social.',
+                size: '8%',
+                participation: '82%',
+                stability: '35%',
+                age: '30-50 años',
+                gender: 'Equilibrado',
+                education: 'Universitaria',
+                class: 'Media, profesionales precarios',
+                motivations: ['Frustración con la moderación del PSOE', 'Búsqueda de políticas más transformadoras', 'Crítica al establishment político', 'Nostalgia de la izquierda más radical'],
+                channels: ['Medios alternativos', 'Twitter', 'Podcasts', 'Redes sociales progresistas'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '35%' },
+                    { zone: 'Madrid Norte', percentage: '15%' },
+                    { zone: 'Alcalá de Henares', percentage: '12%' },
+                    { zone: 'Getafe', percentage: '10%' },
+                    { zone: 'Otros', percentage: '28%' }
+                ],
+                growth: '+2%',
+                risk: 'Alto',
+                trend: 'Creciente',
+                strategies: [
+                    'Adoptar posiciones más progresistas en temas clave',
+                    'Presencia en medios alternativos y podcasts',
+                    'Candidatos renovadores y anti-establishment',
+                    'Políticas transformadoras en vivienda y justicia social'
+                ],
+                keyMessage: '"Hemos escuchado tu crítica y estamos cambiando. El PSOE de hoy es más valiente: regulación del alquiler, impuestos a las grandes fortunas y justicia climática real. Vuelve a casa, la izquierda te necesita unida."'
+            },
+            'madre-trabajadora': {
+                title: 'La Madre Trabajadora Agobiada',
+                subtitle: 'Madre con empleos precarios, centrada en políticas familiares',
+                persona: 'Cristina, 33 años, enfermera en Móstoles, madre soltera de dos niños. Trabaja a turnos y tiene dificultades para conciliar. Se informa por grupos de WhatsApp de madres y redes sociales. Votó PP en 2019, se abstuvo en 2023. Podría votar PSOE por políticas de conciliación.',
+                size: '7%',
+                participation: '55%',
+                stability: '45%',
+                age: '28-45 años',
+                gender: 'Exclusivamente femenino',
+                education: 'FP o universitaria',
+                class: 'Media-baja, empleos precarios',
+                motivations: ['Conciliación laboral-familiar', 'Ayudas a la crianza', 'Educación infantil pública', 'Estabilidad económica familiar'],
+                channels: ['WhatsApp madres', 'Redes sociales', 'Colegios', 'Centros de salud'],
+                geography: [
+                    { zone: 'Móstoles', percentage: '18%' },
+                    { zone: 'Fuenlabrada', percentage: '16%' },
+                    { zone: 'Leganés', percentage: '15%' },
+                    { zone: 'Alcorcón', percentage: '14%' },
+                    { zone: 'Getafe', percentage: '12%' }
+                ],
+                growth: '+4%',
+                risk: 'Medio',
+                trend: 'Creciente',
+                strategies: [
+                    'Políticas específicas de conciliación y ayudas familiares',
+                    'Comunicación en grupos de WhatsApp de madres',
+                    'Propuestas concretas de guarderías públicas',
+                    'Candidatas madres trabajadoras como referentes'
+                ],
+                keyMessage: '"Ser madre no puede ser un obstáculo para tu carrera. El PSOE garantiza guarderías públicas gratuitas, horarios flexibles y ayudas reales para la crianza. Tu familia merece apoyo, no sacrificios."'
+            },
+            'joven': {
+                title: 'El Joven Precario Politizado',
+                subtitle: 'Joven universitario con empleo temporal, preocupado por vivienda y futuro',
+                persona: 'Adrián, 26 años, graduado en Comunicación, trabaja en una startup con contrato temporal. Vive en piso compartido en Malasaña. Se informa por TikTok, Instagram y podcasts. Votó PSOE por primera vez en 2023. Le preocupa el acceso a la vivienda.',
+                size: '6%',
+                participation: '60%',
+                stability: '30%',
+                age: '22-35 años',
+                gender: 'Equilibrado',
+                education: 'Universitaria o FP superior',
+                class: 'Precaria, empleos temporales',
+                motivations: ['Vivienda asequible', 'Empleo estable y bien remunerado', 'Políticas ambientales', 'Cambio generacional en la política'],
+                channels: ['TikTok', 'Instagram', 'Podcasts', 'YouTube', 'Twitter'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '40%' },
+                    { zone: 'Madrid Norte', percentage: '20%' },
+                    { zone: 'Alcalá de Henares', percentage: '15%' },
+                    { zone: 'Getafe', percentage: '10%' },
+                    { zone: 'Otros', percentage: '15%' }
+                ],
+                growth: '+8%',
+                risk: 'Alto',
+                trend: 'Creciente',
+                strategies: [
+                    'Políticas específicas de vivienda para jóvenes',
+                    'Presencia activa en TikTok e Instagram',
+                    'Candidatos jóvenes y renovadores',
+                    'Propuestas concretas sobre empleo juvenil'
+                ],
+                keyMessage: '"Tu futuro no puede depender de la suerte. El PSOE tiene un plan real: 20.000 viviendas públicas para jóvenes, contratos dignos y un planeta habitable. Es hora de que la política trabaje para tu generación."'
+            },
+            'converso': {
+                title: 'El Converso del Centro',
+                subtitle: 'Ex-votante de centro-derecha que considera al PSOE como opción',
+                persona: 'Carlos, 48 años, arquitecto en Madrid, ex-votante de Ciudadanos. Preocupado por la polarización política. Se informa por El País y redes sociales. Busca moderación y gestión competente. Podría votar PSOE si mantiene posiciones centristas.',
+                size: '5%',
+                participation: '75%',
+                stability: '40%',
+                age: '40-60 años',
+                gender: 'Ligero sesgo masculino',
+                education: 'Universitaria superior',
+                class: 'Media-alta, profesionales',
+                motivations: ['Estabilidad institucional', 'Gestión competente', 'Moderación política', 'Rechazo a extremismos'],
+                channels: ['El País', 'LinkedIn', 'Twitter', 'Medios económicos'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '30%' },
+                    { zone: 'Madrid Norte', percentage: '25%' },
+                    { zone: 'Pozuelo', percentage: '15%' },
+                    { zone: 'Las Rozas', percentage: '12%' },
+                    { zone: 'Otros', percentage: '18%' }
+                ],
+                growth: '+3%',
+                risk: 'Alto',
+                trend: 'Estable',
+                strategies: [
+                    'Enfatizar moderación y gestión competente',
+                    'Candidatos con perfil técnico y centrista',
+                    'Presencia en medios económicos y profesionales',
+                    'Evitar posiciones muy progresistas'
+                ],
+                keyMessage: '"La moderación no es inacción. El PSOE ofrece gestión competente, estabilidad institucional y reformas sensatas. Frente al populismo y la crispación, elegimos el diálogo y la eficacia."'
+            },
+            'funcionario': {
+                title: 'El Funcionario Descontento',
+                subtitle: 'Empleado público preocupado por recortes y condiciones laborales',
+                persona: 'Ana, 44 años, profesora de primaria en un colegio público de Alcalá. Funcionaria desde hace 15 años. Preocupada por los recortes en educación y la falta de recursos. Se informa por sindicatos y redes sociales. Voto tradicionalmente PSOE pero con dudas.',
+                size: '4%',
+                participation: '80%',
+                stability: '65%',
+                age: '35-55 años',
+                gender: 'Mayoría femenina',
+                education: 'Universitaria',
+                class: 'Media, empleados públicos',
+                motivations: ['Defensa del empleo público', 'Mejora de condiciones laborales', 'Inversión en servicios públicos', 'Estabilidad laboral'],
+                channels: ['Sindicatos', 'Facebook', 'WhatsApp profesional', 'Medios especializados'],
+                geography: [
+                    { zone: 'Alcalá de Henares', percentage: '20%' },
+                    { zone: 'Madrid Centro', percentage: '18%' },
+                    { zone: 'Getafe', percentage: '15%' },
+                    { zone: 'Móstoles', percentage: '12%' },
+                    { zone: 'Otros', percentage: '35%' }
+                ],
+                growth: '-1%',
+                risk: 'Medio',
+                trend: 'Estable',
+                strategies: [
+                    'Compromiso claro con la función pública',
+                    'Inversión en educación y sanidad',
+                    'Colaboración estrecha con sindicatos',
+                    'Mejora de condiciones laborales públicas'
+                ],
+                keyMessage: '"Los servicios públicos son la columna vertebral de nuestra sociedad. El PSOE se compromete a invertir en educación, sanidad y función pública. Tu trabajo es esencial y merece reconocimiento y recursos."'
+            },
+            'pensionista': {
+                title: 'El Pensionista Indeciso',
+                subtitle: 'Jubilado con dudas sobre su voto, preocupado por pensiones y sanidad',
+                persona: 'Antonio, 72 años, jubilado de la construcción en Parla. Votó PSOE tradicionalmente pero tiene dudas. Preocupado por el poder adquisitivo de su pensión y los copagos sanitarios. Se informa por televisión y radio.',
+                size: '5%',
+                participation: '70%',
+                stability: '50%',
+                age: '65-80 años',
+                gender: 'Ligero sesgo masculino',
+                education: 'Primaria o secundaria básica',
+                class: 'Pensionistas, clase trabajadora jubilada',
+                motivations: ['Poder adquisitivo de pensiones', 'Sanidad pública gratuita', 'Servicios sociales', 'Estabilidad económica'],
+                channels: ['Televisión', 'Radio', 'Centros de mayores', 'Familia'],
+                geography: [
+                    { zone: 'Parla', percentage: '18%' },
+                    { zone: 'Getafe', percentage: '16%' },
+                    { zone: 'Fuenlabrada', percentage: '15%' },
+                    { zone: 'Madrid Sur', percentage: '20%' },
+                    { zone: 'Otros', percentage: '31%' }
+                ],
+                growth: '+1%',
+                risk: 'Medio',
+                trend: 'Estable',
+                strategies: [
+                    'Garantías claras sobre pensiones',
+                    'Compromiso con sanidad pública gratuita',
+                    'Presencia en centros de mayores',
+                    'Mensajes en medios tradicionales'
+                ],
+                keyMessage: '"Has trabajado toda tu vida y mereces una jubilación digna. El PSOE garantiza pensiones que no pierdan poder adquisitivo y una sanidad pública sin copagos. Tu tranquilidad es nuestra prioridad."'
+            },
+            'abstencionista': {
+                title: 'El Abstencionista Ocasional',
+                subtitle: 'Trabajador desencantado que vota esporádicamente',
+                persona: 'Javier, 34 años, repartidor de Glovo en Madrid. Estudios de FP, trabajo precario. Se abstiene habitualmente pero votó en 2019. Se informa por redes sociales y YouTube. Desconfiado de la política pero sensible a mensajes anti-élites.',
+                size: '6%',
+                participation: '35%',
+                stability: '25%',
+                age: '25-45 años',
+                gender: 'Mayoría masculina',
+                education: 'Secundaria o FP',
+                class: 'Trabajadora precaria, servicios',
+                motivations: ['Rechazo al establishment', 'Mejora económica personal', 'Trabajo digno', 'Desconfianza hacia políticos'],
+                channels: ['YouTube', 'TikTok', 'WhatsApp', 'Redes sociales'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '25%' },
+                    { zone: 'Madrid Sur', percentage: '20%' },
+                    { zone: 'Getafe', percentage: '15%' },
+                    { zone: 'Móstoles', percentage: '12%' },
+                    { zone: 'Otros', percentage: '28%' }
+                ],
+                growth: '+2%',
+                risk: 'Alto',
+                trend: 'Estable',
+                strategies: [
+                    'Mensajes anti-establishment y de cambio',
+                    'Propuestas concretas para trabajadores precarios',
+                    'Presencia en YouTube y TikTok',
+                    'Candidatos con perfil renovador'
+                ],
+                keyMessage: '"No todos los políticos son iguales. Cuando la derecha amenaza tus derechos laborales y tus servicios públicos, tu voto cuenta. El PSOE defiende a la gente trabajadora, no a los privilegiados."'
+            },
+            'joven-feminista': {
+                title: 'La Joven Feminista Desmovilizada',
+                subtitle: 'Estudiante o recién graduada con conciencia feminista pero desencantada',
+                persona: 'Lucía, 23 años, estudiante de Psicología en la Complutense. Muy activa en redes sociales feministas. Votó PSOE en 2019 pero se abstuvo en 2023 por desencanto. Se informa por Instagram, TikTok y Twitter.',
+                size: '4%',
+                participation: '45%',
+                stability: '35%',
+                age: '18-30 años',
+                gender: 'Exclusivamente femenino',
+                education: 'Universitaria en curso o recién graduada',
+                class: 'Estudiantes, empleos precarios',
+                motivations: ['Feminismo interseccional', 'Justicia social', 'Cambio generacional', 'Autenticidad política'],
+                channels: ['Instagram', 'TikTok', 'Twitter', 'Podcasts feministas'],
+                geography: [
+                    { zone: 'Madrid Centro',  percentage: '45%' },
+                    { zone: 'Madrid Norte', percentage: '20%' },
+                    { zone: 'Alcalá de Henares', percentage: '15%' },
+                    { zone: 'Getafe', percentage: '10%' },
+                    { zone: 'Otros', percentage: '10%' }
+                ],
+                growth: '+6%',
+                risk: 'Alto',
+                trend: 'Creciente',
+                strategies: [
+                    'Agenda feminista interseccional visible',
+                    'Candidatas jóvenes feministas',
+                    'Presencia auténtica en redes sociales',
+                    'Políticas específicas para jóvenes mujeres'
+                ],
+                keyMessage: '"El feminismo no es una moda, es justicia. El PSOE garantiza el derecho al aborto, la educación sexual integral y la lucha real contra la violencia machista. Tu generación no dará ni un paso atrás."'
+            },
+            'trabajador-desencantado': {
+                title: 'El Trabajador Desencantado del Sur',
+                subtitle: 'Operario industrial con empleo inestable y desconfianza política',
+                persona: 'Roberto, 46 años, operario en una empresa de logística en Getafe. Divorciado, vive solo. Votó PSOE hasta 2015, luego se abstuvo. Preocupado por la deslocalización industrial y el paro. Se informa por radio y Facebook.',
+                size: '5%',
+                participation: '50%',
+                stability: '30%',
+                age: '40-60 años',
+                gender: 'Mayoría masculina',
+                education: 'Secundaria o FP',
+                class: 'Trabajadora industrial, empleos inestables',
+                motivations: ['Estabilidad laboral', 'Protección de la industria', 'Rechazo a la deslocalización', 'Políticas para la clase trabajadora'],
+                channels: ['Radio', 'Facebook', 'Bares y centros sociales', 'Sindicatos'],
+                geography: [
+                    { zone: 'Getafe', percentage: '25%' },
+                    { zone: 'Fuenlabrada', percentage: '20%' },
+                    { zone: 'Leganés', percentage: '18%' },
+                    { zone: 'Móstoles', percentage: '15%' },
+                    { zone: 'Otros Sur', percentage: '22%' }
+                ],
+                growth: '-2%',
+                risk: 'Alto',
+                trend: 'Decreciente',
+                strategies: [
+                    'Políticas de reindustrialización',
+                    'Protección del empleo industrial',
+                    'Presencia en sindicatos y centros obreros',
+                    'Candidatos con origen trabajador'
+                ],
+                keyMessage: '"La industria es el futuro de Madrid Sur. El PSOE apuesta por la reindustrialización, la formación profesional y empleos dignos. No dejaremos que se deslocalice nuestro futuro."'
+            },
+            'nuevo-ciudadano': {
+                title: 'El Nuevo Ciudadano Indeciso',
+                subtitle: 'Profesional extranjero recién nacionalizado con dudas electorales',
+                persona: 'Elena, 32 años, médica venezolana nacionalizada hace 2 años. Trabaja en un hospital público. Se informa por medios digitales y comunidades de expatriados. Primera vez que puede votar en España.',
+                size: '3%',
+                participation: '65%',
+                stability: '40%',
+                age: '25-45 años',
+                gender: 'Equilibrado',
+                education: 'Universitaria superior',
+                class: 'Media-alta, profesionales',
+                motivations: ['Homologación de títulos', 'Integración profesional', 'Estabilidad institucional', 'Políticas migratorias'],
+                channels: ['Medios digitales', 'Comunidades de expatriados', 'LinkedIn', 'WhatsApp'],
+                geography: [
+                    { zone: 'Madrid Centro', percentage: '35%' },
+                    { zone: 'Madrid Norte', percentage: '25%' },
+                    { zone: 'Alcalá de Henares', percentage: '15%' },
+                    { zone: 'Getafe', percentage: '10%' },
+                    { zone: 'Otros', percentage: '15%' }
+                ],
+                growth: '+7%',
+                risk: 'Medio',
+                trend: 'Creciente',
+                strategies: [
+                    'Facilitar homologación de títulos',
+                    'Políticas de integración profesional',
+                    'Comunicación en comunidades de expatriados',
+                    'Candidatos con experiencia migratoria'
+                ],
+                keyMessage: '"España te ha acogido y el PSOE quiere que prosperes. Facilitamos la homologación de títulos, defendemos la sanidad pública donde trabajas y construimos un país diverso y próspero para todos."'
+            },
+            'ecologista': {
+                title: 'El Ecologista Pragmático',
+                subtitle: 'Profesional concienciado ambientalmente que busca políticas realistas',
+                persona: 'Marcos, 38 años, ingeniero ambiental en una consultora. Vive en Alcobendas. Preocupado por el cambio climático pero busca soluciones pragmáticas. Se informa por medios especializados y redes sociales.',
+                size: '2%',
+                participation: '85%',
+                stability: '60%',
+                age: '30-50 años',
+                gender: 'Ligero sesgo masculino',
+                education: 'Universitaria superior',
+                class: 'Media-alta, profesionales técnicos',
+                motivations: ['Políticas ambientales efectivas', 'Transición energética', 'Sostenibilidad urbana', 'Innovación verde'],
+                channels: ['Medios especializados', 'LinkedIn', 'Twitter', 'Revistas científicas'],
+                geography: [
+                    { zone: 'Madrid Norte', percentage: '40%' },
+                    { zone: 'Madrid Centro', percentage: '30%' },
+                    { zone: 'Pozuelo', percentage: '15%' },
+                    { zone: 'Las Rozas', percentage: '10%' },
+                    { zone: 'Otros', percentage: '5%' }
+                ],
+                growth: '+5%',
+                risk: 'Medio',
+                trend: 'Creciente',
+                strategies: [
+                    'Políticas ambientales con base científica',
+                    'Transición energética justa',
+                    'Innovación y tecnología verde',
+                    'Candidatos con formación técnica'
+                ],
+                keyMessage: '"El futuro es verde o no será. El PSOE tiene el plan más ambicioso para la transición energética: energías renovables, movilidad sostenible y empleos verdes. La ciencia guía nuestras decisiones."'
+            }
+        };
+
+        // Función para actualizar resultados de simulación (versión funcional)
+        function updateSimulationResults() {
+            // Obtener valores de los sliders
+            const economic = parseInt(document.getElementById('economic').value);
+            const political = parseInt(document.getElementById('political').value);
+            const campaign = parseInt(document.getElementById('campaign').value);
+            const participation = parseInt(document.getElementById('participation').value);
+            const digital = parseInt(document.getElementById('digital').value);
+            const traditional = parseInt(document.getElementById('traditional').value);
+            const strategic = parseInt(document.getElementById('strategic').value);
+            const momentum = parseInt(document.getElementById('momentum').value);
+
+            // Actualizar displays de valores
+            document.getElementById('economic-value').textContent = (economic > 0 ? '+' : '') + economic;
+            document.getElementById('political-value').textContent = (political > 0 ? '+' : '') + political;
+            document.getElementById('campaign-value').textContent = campaign + '%';
+            document.getElementById('participation-value').textContent = participation + '%';
+            document.getElementById('digital-value').textContent = digital + '%';
+            document.getElementById('traditional-value').textContent = traditional + '%';
+            document.getElementById('strategic-value').textContent = strategic + '%';
+            document.getElementById('momentum-value').textContent = (momentum > 0 ? '+' : '') + momentum;
+
+            // Calcular resultados
+            const baseVote = 18.2;
+            const baseTurnout = 68.5;
+            const baseConfidence = 75;
+
+            // Efectos de los parámetros
+            const economicEffect = (economic / 100) * 2.5;
+            const politicalEffect = (political / 100) * 2.5;
+            const campaignEffect = (campaign / 100) * 3.0;
+            const participationEffect = (participation - 68.5) * 0.1;
+            const digitalEffect = (digital - 50) * 0.08;
+            const traditionalEffect = (traditional - 50) * 0.06;
+            const strategicEffect = (strategic - 35) * 0.04;
+            const momentumEffect = (momentum / 100) * 3.0;
+
+            // Calcular valores finales
+            const finalVote = Math.max(8, Math.min(40, 
+                baseVote + economicEffect + politicalEffect + campaignEffect + 
+                digitalEffect + traditionalEffect + strategicEffect + momentumEffect
+            ));
+            
+            const finalTurnout = Math.max(50, Math.min(90, participation));
+            
+            const finalConfidence = Math.max(60, Math.min(95,
+                baseConfidence + (campaign / 10) + (digital / 20) + (traditional / 20)
+            ));
+
+            // Actualizar resultados en pantalla
+            document.getElementById('sim-vote').textContent = finalVote.toFixed(1) + '%';
+            document.getElementById('sim-turnout').textContent = finalTurnout.toFixed(1) + '%';
+            document.getElementById('sim-confidence').textContent = finalConfidence.toFixed(0) + '%';
+
+            // Calcular y mostrar diferencias
+            const voteDiff = finalVote - baseVote;
+            const turnoutDiff = finalTurnout - baseTurnout;
+            const confidenceDiff = finalConfidence - baseConfidence;
+
+            // Actualizar diferencias con colores
+            updateDifference('sim-vote-diff', voteDiff);
+            updateDifference('sim-turnout-diff', turnoutDiff);
+            updateDifference('sim-confidence-diff', confidenceDiff);
+
+            // Generar análisis
+            generateAnalysis(economic, political, campaign, participation, digital, traditional, strategic, momentum);
+        }
+
+        //  Función para actualizar diferencias con colores
+        function updateDifference(elementId, diff) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = (diff > 0 ? '+' : '') + diff.toFixed(1) + '%';
+                if (diff > 0.5) {
+                    element.className = 'text-sm font-medium text-green-600';
+                } else if (diff < -0.5) {
+                    element.className = 'text-sm font-medium text-red-600';
+                } else {
+                    element.className = 'text-sm font-medium text-gray-600';
+                }
+            }
+        }
+
+        // Función para generar análisis
+        function generateAnalysis(economic, political, campaign, participation, digital, traditional, strategic, momentum) {
+            let analysis = [];
+
+            if (participation > 75) {
+                analysis.push('<div class="text-green-700"><strong>Alta participación:</strong> Favorece al PSOE por mayor movilización de base electoral</div>');
+            } else if (participation < 60) {
+                analysis.push('<div class="text-red-700"><strong>Baja participación:</strong> Puede perjudicar al PSOE, especialmente en segmentos jóvenes</div>');
+            }
+
+            if (digital > 70) {
+                analysis.push('<div class="text-green-700"><strong>Fuerte presencia digital:</strong> Beneficia especialmente a jóvenes y profesionales</div>');
+            }
+
+            if (strategic > 60) {
+                analysis.push('<div class="text-green-700"><strong>Alto voto estratégico:</strong> Favorece al PSOE como alternativa anti-derecha</div>');
+            }
+
+            if (momentum > 20) {
+                analysis.push('<div class="text-green-700"><strong>Momentum positivo:</strong> Las redes sociales amplifican el mensaje del PSOE</div>');
+            } else if (momentum < -20) {
+                analysis.push('<div class="text-red-700"><strong>Momentum negativo:</strong> Narrativas adversas dominan en redes sociales</div>');
+            }
+
+            if (economic > 30 && political > 30) {
+                analysis.push('<div class="text-green-700"><strong>Contexto favorable:</strong> Condiciones económicas y políticas benefician al gobierno</div>');
+            } else if (economic < -30 || political < -30) {
+                analysis.push('<div class="text-orange-700"><strong>Contexto adverso:</strong> Crisis económica o política puede afectar al partido en el gobierno</div>');
+            }
+
+            const analysisContainer = document.getElementById('analysis-content');
+            if (analysisContainer) {
+                analysisContainer.innerHTML = analysis.length > 0 ? analysis.join('') : 
+                    '<div class="text-gray-600">Configuración equilibrada sin alertas específicas</div>';
+            }
+        }
+
+        // Función para resetear simulación
+        function resetSimulationParameters() {
+            document.getElementById('economic').value = 0;
+            document.getElementById('political').value = 0;
+            document.getElementById('campaign').value = 50;
+            document.getElementById('participation').value = 68;
+            document.getElementById('digital').value = 60;
+            document.getElementById('traditional').value = 70;
+            document.getElementById('strategic').value = 35;
+            document.getElementById('momentum').value = 0;
+            
+            updateSimulationResults();
+        }
+
+        // Función para mostrar tabs
+        function showTab(tabName) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Mostrar el contenido seleccionado
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            
+            // Actualizar estilos de tabs
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.className = 'tab-inactive px-4 py-2 rounded-md text-sm font-medium transition-all';
+            });
+            
+            document.getElementById(`tab-${tabName}`).className = 'tab-active px-4 py-2 rounded-md text-sm font-medium transition-all';
+            
+            currentTab = tabName;
+            
+            // Inicializar gráfico si es necesario
+            if (tabName === 'simulation' && !scenariosChart) {
+                initScenariosChart();
+            }
+        }
+
+        // Función para seleccionar segmento y mostrar modal
+        function selectSegment(segmentId) {
+            const profile = profilesData[segmentId];
+            if (!profile) {
+                alert(`Información detallada del segmento: ${segmentId} (en desarrollo)`);
+                return;
+            }
+
+            // Llenar el modal con información
+            document.getElementById('modal-title').textContent = profile.title;
+            document.getElementById('modal-subtitle').textContent = profile.subtitle;
+            document.getElementById('modal-persona').textContent = profile.persona;
+            document.getElementById('modal-size').textContent = profile.size;
+            document.getElementById('modal-participation').textContent = profile.participation;
+            document.getElementById('modal-stability').textContent = profile.stability;
+            document.getElementById('modal-age').textContent = profile.age;
+            document.getElementById('modal-gender').textContent = profile.gender;
+            document.getElementById('modal-education').textContent = profile.education;
+            document.getElementById('modal-class').textContent = profile.class;
+
+            // Motivaciones
+            const motivationsContainer = document.getElementById('modal-motivations');
+            motivationsContainer.innerHTML = '';
+            profile.motivations.forEach(motivation => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full';
+                badge.textContent = motivation;
+                motivationsContainer.appendChild(badge);
+            });
+
+            // Canales de información
+            const channelsContainer = document.getElementById('modal-channels');
+            channelsContainer.innerHTML = '';
+            profile.channels.forEach(channel => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full';
+                badge.textContent = channel;
+                channelsContainer.appendChild(badge);
+            });
+
+            // Distribución geográfica
+            const geographyContainer = document.getElementById('modal-geography');
+            geographyContainer.innerHTML = '';
+            profile.geography.forEach(geo => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center py-1 border-b border-gray-100';
+                div.innerHTML = `
+                    <span class="text-sm font-medium">${geo.zone}</span>
+                    <span class="text-sm text-gray-600">${geo.percentage}</span>
+                `;
+                geographyContainer.appendChild(div);
+            });
+
+            // Tendencias
+            document.getElementById('modal-growth').textContent = profile.growth;
+            document.getElementById('modal-risk').textContent = profile.risk;
+            document.getElementById('modal-trend').textContent = profile.trend;
+
+            // Estrategias
+            const strategiesContainer = document.getElementById('modal-strategies');
+            strategiesContainer.innerHTML = '';
+            profile.strategies.forEach(strategy => {
+                const div = document.createElement('div');
+                div.className = 'flex items-start gap-2 p-2 bg-gray-50 rounded';
+                div.innerHTML = `
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-600 mt-0.5"></i>
+                    <span class="text-sm text-gray-700">${strategy}</span>
+                `;
+                strategiesContainer.appendChild(div);
+            });
+
+            // Mensaje clave
+            const messageContainer = document.getElementById('modal-message');
+            messageContainer.querySelector('.text-red-800').textContent = profile.keyMessage || 'Mensaje en desarrollo para esta tipología.';
+
+            // Mostrar el modal
+            document.getElementById('profileModal').style.display = 'block';
+            
+            // Reinicializar iconos de Lucide en el modal
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 100);
+        }
+
+        // Función para cerrar el modal
+        function closeModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        // Variables globales para simulación
+        let simulationParameters = {
+            economicContext: 0,
+            politicalContext: 0,
+            campaignIntensity: 0.5,
+            socialMediaImpact: 0.3,
+            participationRate: 68,
+            digitalMediaPresence: 60,
+            traditionalMediaPresence: 70,
+            strategicVote: 35,
+            socialMomentum: 0
+        };
+
+        // Función para ejecutar simulación (versión funcional)
+        function runSimulation() {
+            console.log('=== EJECUTANDO SIMULACIÓN ===');
+            
+            // Valores base para comparación
+            const baseVoteShare = 0.182; // 18.2% resultado real 2023
+            
+            // Calcular ajustes basados en parámetros
+            const economicEffect = (simulationParameters.economicContext / 100) * 0.025;
+            const politicalEffect = (simulationParameters.politicalContext / 100) * 0.025;
+            const campaignEffect = (simulationParameters.campaignIntensity / 100) * 0.03;
+            const socialMediaEffect = (simulationParameters.socialMediaImpact / 100) * 0.02;
+            const participationEffect = (simulationParameters.participationRate - 68) * 0.001;
+            const digitalEffect = (simulationParameters.digitalMediaPresence - 50) * 0.0008;
+            const traditionalEffect = (simulationParameters.traditionalMediaPresence - 50) * 0.0006;
+            const strategicEffect = (simulationParameters.strategicVote - 35) * 0.0004;
+            const momentumEffect = (simulationParameters.socialMomentum / 100) * 0.003;
+            
+            // Calcular cuota de voto final
+            const finalVoteShare = Math.max(0.08, Math.min(0.40, 
+                baseVoteShare + economicEffect + politicalEffect + campaignEffect + 
+                socialMediaEffect + participationEffect + digitalEffect + 
+                traditionalEffect + strategicEffect + momentumEffect
+            ));
+            
+            // Calcular participación final
+            const finalTurnout = Math.max(0.5, Math.min(0.9, 
+                simulationParameters.participationRate / 100
+            ));
+            
+            // Calcular confianza final
+            const finalConfidence = Math.max(0.6, Math.min(0.95,
+                0.75 + (simulationParameters.campaignIntensity / 1000) + 
+                (simulationParameters.digitalMediaPresence / 500) +
+                (simulationParameters.traditionalMediaPresence / 500)
+            ));
+            
+            console.log('Valores calculados:', {
+                voteShare: finalVoteShare,
+                turnout: finalTurnout,
+                confidence: finalConfidence
+            });
+            
+            // Actualizar resultados en pantalla
+            displayComparativeResults(finalVoteShare, finalTurnout, finalConfidence);
+            
+            console.log('=== SIMULACIÓN COMPLETADA ===');
+        }
+
+        // Función para mostrar resultados comparativos (simplificada)
+        function displayComparativeResults(voteShare, turnout, confidence) {
+            console.log('=== INICIO displayComparativeResults ===');
+            console.log('Parámetros recibidos:', voteShare, turnout, confidence);
+            
+            // Buscar todos los elementos
+            const elements = {
+                voteResult: document.getElementById('vote-share-result'),
+                voteDiff: document.getElementById('vote-share-diff'),
+                turnoutResult: document.getElementById('turnout-result'),
+                turnoutDiff: document.getElementById('turnout-diff'),
+                confidenceResult: document.getElementById('confidence-result'),
+                confidenceDiff: document.getElementById('confidence-diff')
+            };
+            
+            console.log('Elementos encontrados:', elements);
+            
+            // Valores base
+            const baseVoteShare = 0.182;
+            const baseTurnout = 0.685;
+            const baseConfidence = 0.75;
+            
+            // Actualizar cuota de voto
+            if (elements.voteResult) {
+                const newValue = (voteShare * 100).toFixed(1) + '%';
+                elements.voteResult.textContent = newValue;
+                console.log('Actualizado vote-share-result a:', newValue);
+            } else {
+                console.error('ERROR: No se encontró vote-share-result');
+            }
+            
+            if (elements.voteDiff) {
+                const voteDiff = ((voteShare - baseVoteShare) * 100);
+                const diffText = (voteDiff > 0 ? '+' : '') + voteDiff.toFixed(1) + '%';
+                elements.voteDiff.textContent = diffText;
+                elements.voteDiff.className = voteDiff > 0 ? 'text-sm font-medium text-green-600' : 
+                                             voteDiff < 0 ? 'text-sm font-medium text-red-600' : 
+                                             'text-sm font-medium text-gray-600';
+                console.log('Actualizado vote-share-diff a:', diffText);
+            } else {
+                console.error('ERROR: No se encontró vote-share-diff');
+            }
+            
+            // Actualizar participación
+            if (elements.turnoutResult) {
+                const newValue = (turnout * 100).toFixed(1) + '%';
+                elements.turnoutResult.textContent = newValue;
+                console.log('Actualizado turnout-result a:', newValue);
+            } else {
+                console.error('ERROR: No se encontró turnout-result');
+            }
+            
+            if (elements.turnoutDiff) {
+                const turnoutDiff = ((turnout - baseTurnout) * 100);
+                const diffText = (turnoutDiff > 0 ? '+' : '') + turnoutDiff.toFixed(1) + '%';
+                elements.turnoutDiff.textContent = diffText;
+                elements.turnoutDiff.className = turnoutDiff > 0 ? 'text-sm font-medium text-green-600' : 
+                                                 turnoutDiff < 0 ? 'text-sm font-medium text-red-600' : 
+                                                 'text-sm font-medium text-gray-600';
+                console.log('Actualizado turnout-diff a:', diffText);
+            } else {
+                console.error('ERROR: No se encontró turnout-diff');
+            }
+            
+            // Actualizar confianza
+            if (elements.confidenceResult) {
+                const newValue = (confidence * 100).toFixed(0) + '%';
+                elements.confidenceResult.textContent = newValue;
+                console.log('Actualizado confidence-result a:', newValue);
+            } else {
+                console.error('ERROR: No se encontró confidence-result');
+            }
+            
+            if (elements.confidenceDiff) {
+                const confidenceDiff = ((confidence - baseConfidence) * 100);
+                const diffText = (confidenceDiff > 0 ? '+' : '') + confidenceDiff.toFixed(0) + '%';
+                elements.confidenceDiff.textContent = diffText;
+                elements.confidenceDiff.className = confidenceDiff > 0 ? 'text-sm font-medium text-green-600' : 
+                                                   confidenceDiff < 0 ? 'text-sm font-medium text-red-600' : 
+                                                   'text-sm font-medium text-gray-600';
+                console.log('Actualizado confidence-diff a:', diffText);
+            } else {
+                console.error('ERROR: No se encontró confidence-diff');
+            }
+            
+            console.log('=== FIN displayComparativeResults ===');
+        }
+
+        // Función para resetear simulación
+        function resetSimulation() {
+            // Resetear parámetros a valores por defecto
+            simulationParameters = {
+                economicContext: 0,
+                politicalContext: 0,
+                campaignIntensity: 50,
+                socialMediaImpact: 30,
+                participationRate: 68,
+                digitalMediaPresence: 60,
+                traditionalMediaPresence: 70,
+                strategicVote: 35,
+                socialMomentum: 0
+            };
+            
+            // Resetear sliders
+            document.getElementById('economic-context-slider').value = 0;
+            document.getElementById('political-context-slider').value = 0;
+            document.getElementById('campaign-intensity-slider').value = 50;
+            document.getElementById('social-media-impact-slider').value = 30;
+            document.getElementById('participation-slider').value = 68;
+            document.getElementById('digital-media-slider').value = 60;
+            document.getElementById('traditional-media-slider').value = 70;
+            document.getElementById('strategic-vote-slider').value = 35;
+            document.getElementById('social-momentum-slider').value = 0;
+            
+            // Actualizar displays
+            document.getElementById('economic-context-value').textContent = '0';
+            document.getElementById('political-context-value').textContent = '0';
+            document.getElementById('campaign-intensity-value').textContent = '50%';
+            document.getElementById('social-media-impact-value').textContent = '30%';
+            document.getElementById('participation-rate-value').textContent = '68%';
+            document.getElementById('digital-media-presence-value').textContent = '60%';
+            document.getElementById('traditional-media-presence-value').textContent = '70%';
+            document.getElementById('strategic-vote-value').textContent = '35%';
+            document.getElementById('social-momentum-value').textContent = '0';
+            
+            // Resetear resultados
+            displayComparativeResults(0.182, 0.685, 0.75);
+            
+            // Limpiar análisis
+            const analysisPanel = document.getElementById('parameter-analysis');
+            if (analysisPanel) {
+                analysisPanel.remove();
+            }
+        }
+
+        // Función para mostrar análisis de parámetros
+        function showParameterAnalysis() {
+            const analysisText = generateParameterAnalysis();
+            
+            // Crear o actualizar panel de análisis
+            let analysisPanel = document.getElementById('parameter-analysis');
+            if (!analysisPanel) {
+                analysisPanel = document.createElement('div');
+                analysisPanel.id = 'parameter-analysis';
+                analysisPanel.className = 'card p-4 mt-4';
+                
+                const resultsSection = document.querySelector('#content-simulation .lg\\:col-span-2');
+                if (resultsSection) {
+                    resultsSection.appendChild(analysisPanel);
+                }
+            }
+            
+            analysisPanel.innerHTML = `
+                <h4 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    Análisis de Parámetros
+                </h4>
+                <div class="space-y-2 text-sm">
+                    ${analysisText}
+                </div>
+            `;
+            
+            // Reinicializar iconos
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 100);
+        }
+
+        // Función para generar análisis de parámetros
+        function generateParameterAnalysis() {
+            let analysis = [];
+            
+            // Análisis de participación
+            if (simulationParameters.participationRate > 75) {
+                analysis.push('<div class="text-green-700"><strong>Alta participación:</strong> Favorece al PSOE por mayor movilización de base electoral</div>');
+            } else if (simulationParameters.participationRate < 60) {
+                analysis.push('<div class="text-red-700"><strong>Baja participación:</strong> Puede perjudicar al PSOE, especialmente en segmentos jóvenes</div>');
+            }
+            
+            // Análisis de medios digitales
+            if (simulationParameters.digitalMediaPresence > 70) {
+                analysis.push('<div class="text-green-700"><strong>Fuerte presencia digital:</strong> Beneficia especialmente a jóvenes y profesionales</div>');
+            } else if (simulationParameters.digitalMediaPresence < 40) {
+                analysis.push('<div class="text-orange-700"><strong>Presencia digital limitada:</strong> Limita alcance en tipologías jóvenes y urbanas</div>');
+            }
+            
+            // Análisis de voto estratégico
+            if (simulationParameters.strategicVote > 60) {
+                analysis.push('<div class="text-green-700"><strong>Alto voto estratégico:</strong> Favorece al PSOE como alternativa anti-derecha</div>');
+            }
+            
+            // Análisis de momentum
+            if (simulationParameters.socialMomentum > 20) {
+                analysis.push('<div class="text-green-700"><strong>Momentum positivo:</strong> Las redes sociales amplifican el mensaje del PSOE</div>');
+            } else if (simulationParameters.socialMomentum < -20) {
+                analysis.push('<div class="text-red-700"><strong>Momentum negativo:</strong> Narrativas adversas dominan en redes sociales</div>');
+            }
+            
+            // Análisis de desequilibrio mediático
+            const mediaGap = Math.abs(simulationParameters.digitalMediaPresence - simulationParameters.traditionalMediaPresence);
+            if (mediaGap > 30) {
+                analysis.push('<div class="text-orange-700"><strong>Desequilibrio mediático:</strong> Diferencia significativa entre presencia digital y tradicional</div>');
+            }
+            
+            return analysis.length > 0 ? analysis.join('') : '<div class="text-gray-600">Configuración equilibrada sin alertas específicas</div>';
+        }
+
+        // Función para ejecutar simulación
+        function runSimulation() {
+            updateSimulation();
+            alert('Simulación ejecutada con los parámetros actuales');
+        }
+
+        // Función para mostrar resultados de simulación
+        function displaySimulationResults(voteShare, turnout, confidence) {
+            document.getElementById('vote-share').textContent = (voteShare * 100).toFixed(1) + '%';
+            document.getElementById('turnout').textContent = (turnout * 100).toFixed(1) + '%';
+            document.getElementById('confidence').textContent = (confidence * 100).toFixed(0) + '%';
+            
+            // Actualizar gráfico si existe
+            if (scenariosChart) {
+                updateScenariosChart(voteShare);
+            }
+        }
+
+        // Función para mostrar análisis de parámetros
+        function showParameterAnalysis() {
+            const analysisText = generateParameterAnalysis();
+            
+            // Crear o actualizar panel de análisis
+            let analysisPanel = document.getElementById('parameter-analysis');
+            if (!analysisPanel) {
+                analysisPanel = document.createElement('div');
+                analysisPanel.id = 'parameter-analysis';
+                analysisPanel.className = 'card p-4 mt-4';
+                
+                const resultsSection = document.querySelector('#content-simulation .lg\\:col-span-2');
+                if (resultsSection) {
+                    resultsSection.appendChild(analysisPanel);
+                }
+            }
+            
+            analysisPanel.innerHTML = `
+                <h4 class="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    Análisis de Parámetros
+                </h4>
+                <div class="space-y-2 text-sm">
+                    ${analysisText}
+                </div>
+            `;
+            
+            // Reinicializar iconos
+            setTimeout(() => {
+                lucide.createIcons();
+            }, 100);
+        }
+
+        // Función para inicializar gráfico de escenarios
+        function initScenariosChart() {
+            const ctx = document.getElementById('scenarios-chart').getContext('2d');
+            scenariosChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pesimista', 'Realista', 'Optimista'],
+                    datasets: [{
+                        label: 'Cuota de voto (%)',
+                        data: [14.6, 18.2, 21.8],
+                        backgroundColor: ['#ef4444', '#f97316', '#22c55e'],
+                        borderColor: ['#dc2626', '#ea580c', '#16a34a'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 30
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Función para actualizar gráfico de escenarios
+        function updateScenariosChart(baseValue) {
+            if (scenariosChart) {
+                const pessimistic = baseValue * 0.8 * 100;
+                const realistic = baseValue * 100;
+                const optimistic = baseValue * 1.2 * 100;
+                
+                scenariosChart.data.datasets[0].data = [pessimistic, realistic, optimistic];
+                scenariosChart.update();
+            }
+        }
+
+        // Función para actualizar parámetros
+        function updateParameter(paramName, value) {
+            simulationParameters[paramName] = parseFloat(value);
+            
+            // Actualizar display del valor
+            let displayElement;
+            if (paramName === 'socialMediaImpact') {
+                displayElement = document.getElementById('social-media-impact-value');
+                if (displayElement) {
+                    displayElement.textContent = value + '%';
+                }
+            } else if (paramName === 'economicContext' || paramName === 'politicalContext') {
+                displayElement = document.getElementById(paramName.replace(/([A-Z])/g, '-$1').toLowerCase() + '-value');
+                if (displayElement) {
+                    displayElement.textContent = (value > 0 ? '+' : '') + value;
+                }
+            } else if (paramName === 'campaignIntensity') {
+                displayElement = document.getElementById('campaign-intensity-value');
+                if (displayElement) {
+                    displayElement.textContent = value + '%';
+                }
+            } else {
+                displayElement = document.getElementById(paramName.replace(/([A-Z])/g, '-$1').toLowerCase() + '-value');
+                if (displayElement) {
+                    if (paramName === 'participationRate') {
+                        displayElement.textContent = value + '%';
+                    } else if (paramName === 'socialMomentum') {
+                        displayElement.textContent = (value > 0 ? '+' : '') + value;
+                    } else {
+                        displayElement.textContent = value + '%';
+                    }
+                }
+            }
+            
+            // Ejecutar simulación automáticamente
+            runSimulation();
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            showTab('overview');
+            
+            // Event listeners para el modal
+            const modal = document.getElementById('profileModal');
+            const closeBtn = document.querySelector('.close');
+            
+            // Cerrar modal al hacer clic en la X
+            closeBtn.onclick = closeModal;
+            
+            // Cerrar modal al hacer clic fuera del contenido
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+            
+            // Cerrar modal con tecla Escape
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && modal.style.display === 'block') {
+                    closeModal();
+                }
+            });
+            
+            // Ejecutar simulación inicial
+            setTimeout(() => {
+                if (typeof updateSimulationResults === 'function') {
+                    updateSimulationResults();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
